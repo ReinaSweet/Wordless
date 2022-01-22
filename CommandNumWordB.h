@@ -32,7 +32,8 @@ public:
         kShowFailsAtEndOfPossibilities = 1 << 3,
         kShowAlmostsAtEndOfPossibilities = 1 << 4,
         kNumFails = 1 << 5,
-        kPrintPatternMatchAlternatives = 1 << 6
+        kPrintPatternMatchAlternatives = 1 << 6,
+        kShowAverageStepsToSolve = 1 << 7
     };
     const StepStrategy kDefaultStrategies[kMaxSteps]
     {

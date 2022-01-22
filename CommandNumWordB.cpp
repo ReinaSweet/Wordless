@@ -74,9 +74,11 @@ uint32_t NumWordB::NumberWordStrategy::TestAllPossibilitiesUntilPassXFails(const
 
     uint32_t fails = 0;
     uint32_t wordsProcessedBeforePrint = 0;
+    uint32_t totalStepsUsed = 0;
     for (const NumberWord& targetWord : allPossibilities)
     {
         const size_t steps = TestSpecificWord(targetWord);
+        totalStepsUsed += static_cast<uint32_t>(steps);
         if (steps > kMaxSteps)
         {
             ++fails;
@@ -112,6 +114,12 @@ uint32_t NumWordB::NumberWordStrategy::TestAllPossibilitiesUntilPassXFails(const
     if (HasPrintBehavior(PrintBehavior::kNumFails))
     {
         printf(" - %u Ls", fails);
+    }
+
+    if (HasPrintBehavior(PrintBehavior::kShowAverageStepsToSolve))
+    {
+        const double averageStepsToSolve = static_cast<double>(totalStepsUsed) / static_cast<double>(allPossibilities.size());
+        printf(" - Avg Steps %.4f", averageStepsToSolve);
     }
 
     if (HasPrintBehavior(PrintBehavior::kShowAlmostsAtEndOfPossibilities))
@@ -530,11 +538,19 @@ void NumWordB::COMMAND_ComprehensiveTestFromSetOfSecondWords()
 
 void NumWordB::COMMAND_ComprehensiveTest()
 {
+    double possiblePatternsEachStep = std::pow(3., 5.);
+    const double threeStepAnswers = (static_cast<double>(NumberWord::sAnswerWords.size()) - possiblePatternsEachStep);
+    possiblePatternsEachStep -= 1.; // Remove exact first guess
+    const double minimumPossibleStepsForAllAnswers = 1. + (2. * possiblePatternsEachStep) + (3. * threeStepAnswers);
+
+    printf("Idealized Perfect Average Steps Score: %.4f\n\n", minimumPossibleStepsForAllAnswers / static_cast<double>(NumberWord::sAnswerWords.size()));
+
     NumberWordStrategy strategy;
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kPossibilitiesProgress);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowFailsAtEndOfPossibilities);
+    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowAverageStepsToSolve);
 
-    strategy.TestAllPossibilities(NumberWord::sAllWords);
+    strategy.TestAllPossibilities(NumberWord::sAnswerWords);
 }
 
 void NumWordB::COMMAND_ComprehensiveTest2049WordsOnly()

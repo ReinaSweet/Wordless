@@ -2,6 +2,7 @@
 
 uint16_t NumberWord::sMatchSetToMatchPattern[kNumWords][kNumWords] = { {0} };
 std::vector<NumberWord> NumberWord::sAllWords;
+std::vector<NumberWord> NumberWord::sAnswerWords;
 std::vector<NumberWord> NumberWord::sDifficultToEvalWords;
 std::vector<NumberWord> NumberWord::sVERYDifficultToEvalWords;
 std::vector<NumberWord> NumberWord::s2049MatchedWords;
@@ -9,6 +10,11 @@ std::vector<NumberWord> NumberWord::s2049MatchedWords;
 void NumberWord::Initialize()
 {
     SwapToAllWords();
+
+    for (size_t i = 0; i < kNumOfAnswerWords; ++i)
+    {
+        sAnswerWords.push_back(NumberWord::LookupNumberWord(kAnswerWords[i]));
+    }
 
     for (size_t i = 0; i < kNumDifficultToEvalWords; ++i)
     {

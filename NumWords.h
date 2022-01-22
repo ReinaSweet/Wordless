@@ -211,6 +211,7 @@ public:
 
     static uint16_t sMatchSetToMatchPattern[kNumWords][kNumWords];
     static std::vector<NumberWord> sAllWords;
+    static std::vector<NumberWord> sAnswerWords;
     static std::vector<NumberWord> sDifficultToEvalWords;
     static std::vector<NumberWord> sVERYDifficultToEvalWords;
     static std::vector<NumberWord> s2049MatchedWords;
