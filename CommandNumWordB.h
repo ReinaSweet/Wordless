@@ -30,7 +30,7 @@ public:
         kInputWord = 1 << 1,
         kPossibilitiesProgress = 1 << 2,
         kShowFailsAtEndOfPossibilities = 1 << 3,
-        kShowAlmostsAtEndOfPossibilities = 1 << 4,
+        kShowSuccessPossibilitiesOverThree = 1 << 4,
         kNumFails = 1 << 5,
         kPrintPatternMatchAlternatives = 1 << 6,
         kShowAverageStepsToSolve = 1 << 7
@@ -39,7 +39,7 @@ public:
     {
         StepStrategy::kSpecialWord1,
         StepStrategy::kOptimalPatternMatch,
-        StepStrategy::kSuperSpecialLogicIGuess,
+        StepStrategy::kOptimalPatternMatch,
         StepStrategy::kOptimalPatternMatch,
         StepStrategy::kOptimalPatternMatch,
         StepStrategy::kTakeFirstEntry
@@ -61,6 +61,8 @@ public:
     void SetSpecialWord2(const NumberWord& specialWord2);
     void AddPrintBehavior(PrintBehavior printBehavior);
     void SetStartingStep(size_t step);
+
+    double GetAverageStepsToSolve() const { return mAverageStepsToSolve; }
 
 private:
     void PairDownSpecificPossibilities(uint16_t sourceMatch, const NumberWord& entryWord, std::vector<NumberWord>& possibilities) const;
@@ -90,6 +92,8 @@ private:
     uint16_t mStepResults[kMaxSteps] = { 0 };
 
     const std::vector<NumberWord>* mRemainingPossibilitiesSource = nullptr;
+
+    double mAverageStepsToSolve = 0.;
 };
 
 // COMMANDS
@@ -101,5 +105,7 @@ void COMMAND_ComprehensiveTest();
 void COMMAND_ComprehensiveTest2049WordsOnly();
 void COMMAND_IsThereAnyOptimalWordForDouble2049();
 void COMMAND_SpecificStartSpecificWord(const char* const start, const char* const word);
+void COMMAND_DisplayFarRemovedLetterCombinations();
+void COMMAND_FindFewestStepsOpeningWord(uint64_t startingIndex, uint64_t untilIndex);
 void COMMAND_PlayWordle();
 } // namespace NumWordB

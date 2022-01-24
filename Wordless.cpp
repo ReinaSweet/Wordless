@@ -43,6 +43,8 @@ int main()
     menuNumWordBExploration.AddCommand("ctb", "Comprehensive Test - 2049 Words Only", NumWordB::COMMAND_ComprehensiveTest2049WordsOnly);
     menuNumWordBExploration.AddCommand("sssw", "Test Specific Start, Specific Word;Start;Target Word", NumWordB::COMMAND_SpecificStartSpecificWord);
     menuNumWordBExploration.AddCommand("grrrrr", "Try to find any optimal word for double 2049", NumWordB::COMMAND_IsThereAnyOptimalWordForDouble2049);
+    menuNumWordBExploration.AddCommand("vfc", "Display all 'very far removed' letters (no three pair connections)", NumWordB::COMMAND_DisplayFarRemovedLetterCombinations);
+    menuNumWordBExploration.AddCommand("fsw", "Find fewest steps word;dStarting index;dUntil index", NumWordB::COMMAND_FindFewestStepsOpeningWord);
 
     mainMenu.AddSubmenu("nwa", menuNumWordAExploration);
     mainMenu.AddSubmenu("nwb", menuNumWordBExploration);

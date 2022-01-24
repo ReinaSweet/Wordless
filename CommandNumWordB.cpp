@@ -92,9 +92,9 @@ uint32_t NumWordB::NumberWordStrategy::TestAllPossibilitiesUntilPassXFails(const
                 break;
             }
         }
-        else if (steps == kMaxSteps)
+        else if (steps > 3)
         {
-            if (HasPrintBehavior(PrintBehavior::kShowAlmostsAtEndOfPossibilities))
+            if (HasPrintBehavior(PrintBehavior::kShowSuccessPossibilitiesOverThree))
             {
                 stepsToWords[steps].push_back(targetWord);
             }
@@ -111,6 +111,14 @@ uint32_t NumWordB::NumberWordStrategy::TestAllPossibilitiesUntilPassXFails(const
         }
     }
 
+    //
+    // End Data to store on the strategy
+    //
+    mAverageStepsToSolve = static_cast<double>(totalStepsUsed) / static_cast<double>(allPossibilities.size());
+
+    //
+    // Final Print Behaviors
+    //
     if (HasPrintBehavior(PrintBehavior::kNumFails))
     {
         printf(" - %u Ls", fails);
@@ -118,19 +126,26 @@ uint32_t NumWordB::NumberWordStrategy::TestAllPossibilitiesUntilPassXFails(const
 
     if (HasPrintBehavior(PrintBehavior::kShowAverageStepsToSolve))
     {
-        const double averageStepsToSolve = static_cast<double>(totalStepsUsed) / static_cast<double>(allPossibilities.size());
-        printf(" - Avg Steps %.4f", averageStepsToSolve);
+        printf(" - Avg Steps %.4f", mAverageStepsToSolve);
     }
 
-    if (HasPrintBehavior(PrintBehavior::kShowAlmostsAtEndOfPossibilities))
+    if (HasPrintBehavior(PrintBehavior::kShowSuccessPossibilitiesOverThree))
     {
-        auto iter = stepsToWords.find(kMaxSteps);
-        if (iter != stepsToWords.end())
+        size_t steps = 4;
+        auto iter = stepsToWords.find(steps);
+        while (iter != stepsToWords.end())
         {
-            printf("\n %zu STEPS", kMaxSteps);
+            printf("\n %zu STEPS", steps);
             PrintWordList(mTextForWord, (*iter).second);
+            ++steps;
+            if (steps > kMaxSteps)
+            {
+                break;
+            }
+            iter = stepsToWords.find(steps);
         }
     }
+
     if (HasPrintBehavior(PrintBehavior::kShowFailsAtEndOfPossibilities))
     {
         size_t steps = kMaxSteps + 1;
@@ -428,7 +443,7 @@ void NumWordB::PrintWordList(std::string& bufferString, const std::vector<Number
 
     if (wordList.size() > index)
     {
-        printf("...");
+        printf("... (+%zu)", wordList.size() - index);
     }
     if (hasEndingNewLine)
     {
@@ -496,7 +511,7 @@ void NumWordB::COMMAND_ComprehensiveTestFromSetOfFirstWords()
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kInputWord);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kNumFails);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kPossibilitiesProgress);
-    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowAlmostsAtEndOfPossibilities);
+    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowSuccessPossibilitiesOverThree);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowFailsAtEndOfPossibilities);
 
     strategy.SetSpecificStepStrategy(1, NumberWordStrategy::StepStrategy::kUseInputWord);
@@ -519,7 +534,7 @@ void NumWordB::COMMAND_ComprehensiveTestFromSetOfSecondWords()
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kInputWord);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kNumFails);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kPossibilitiesProgress);
-    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowAlmostsAtEndOfPossibilities);
+    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowSuccessPossibilitiesOverThree);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowFailsAtEndOfPossibilities);
 
     strategy.SetSpecificStepStrategy(2, NumberWordStrategy::StepStrategy::kUseInputWord);
@@ -547,6 +562,7 @@ void NumWordB::COMMAND_ComprehensiveTest()
 
     NumberWordStrategy strategy;
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kPossibilitiesProgress);
+    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowSuccessPossibilitiesOverThree);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowFailsAtEndOfPossibilities);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kShowAverageStepsToSolve);
 
@@ -605,6 +621,130 @@ void NumWordB::COMMAND_SpecificStartSpecificWord(const char* const start, const 
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kOptimalWordsAndRemainingPossibilities);
     strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kPrintPatternMatchAlternatives);
     strategy.TestSpecificWord(targetWord);
+}
+
+uint32_t GetIndexFromFarRemovedVars(char firstC, char secondC, char thirdC)
+{
+    if ((firstC == secondC) || (firstC == thirdC) || (secondC == thirdC))
+    {
+        return UINT32_MAX;
+    }
+
+    uint32_t vals[3] = { static_cast<uint32_t>(firstC), static_cast<uint32_t>(secondC), static_cast<uint32_t>(thirdC) };
+
+    if (vals[0] > vals[1])
+    {
+        std::swap(vals[0], vals[1]);
+    }
+    if (vals[1] > vals[2])
+    {
+        std::swap(vals[1], vals[2]);
+        if (vals[0] > vals[1])
+        {
+            std::swap(vals[0], vals[1]);
+        }
+    }
+
+    return (vals[0] - 'a') + ((vals[1] - 'b') * 26) + ((vals[2] - 'c') * 25 * 26);
+};
+
+void NumWordB::COMMAND_DisplayFarRemovedLetterCombinations()
+{
+    const size_t maxRemovedVarValue = (26 * 25 * 24) + (26 * 25) + (26);
+    uint8_t farRemovedVars[maxRemovedVarValue + 1] = { 0 };
+    std::string textForWord;
+
+    for (const NumberWord& word : NumberWord::sAllWords)
+    {
+        word.ConvertToString(textForWord);
+        for (size_t x = 0; x < kWordLength; ++x)
+        {
+            for (size_t y = (x + 1); y < kWordLength; ++y)
+            {
+                for (size_t z = (y + 1); z < kWordLength; ++z)
+                {
+                    const uint32_t index = GetIndexFromFarRemovedVars(textForWord[x], textForWord[y], textForWord[z]);
+                    if (index != UINT32_MAX)
+                    {
+                        farRemovedVars[static_cast<size_t>(index)]++;
+                    }
+                }
+            }
+        }
+    }
+
+    uint8_t lettersCountsInFarRemoved[26] = { 0 };
+
+    uint32_t entriesBuildingToNewLine = 0;
+    for (char firstC = 'a'; firstC <= 'z'; ++firstC)
+    {
+        for (char secondC = (firstC + 1); secondC <= 'z'; ++secondC)
+        {
+            for (char thirdC = (secondC + 1); thirdC <= 'z'; ++thirdC)
+            {
+                const uint32_t index = GetIndexFromFarRemovedVars(firstC, secondC, thirdC);
+                const uint16_t val = farRemovedVars[static_cast<size_t>(index)];
+                if (val < 1)
+                {
+                    lettersCountsInFarRemoved[static_cast<size_t>(firstC - 'a')]++;
+                    lettersCountsInFarRemoved[static_cast<size_t>(secondC - 'a')]++;
+                    lettersCountsInFarRemoved[static_cast<size_t>(thirdC - 'a')]++;
+
+                    printf("%c%c%c = %u,  ", firstC, secondC, thirdC, static_cast<uint32_t>(val));
+                    ++entriesBuildingToNewLine;
+                    if (entriesBuildingToNewLine > 14)
+                    {
+                        putchar('\n');
+                        entriesBuildingToNewLine = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    printf("\n\n");
+    entriesBuildingToNewLine = 0;
+    for (char c = 'a'; c <= 'z'; ++c)
+    {
+        const uint32_t count = static_cast<uint32_t>(lettersCountsInFarRemoved[static_cast<uint32_t>(c - 'a')]);
+
+        printf("%c = %u,  ", c, count);
+        ++entriesBuildingToNewLine;
+        if (entriesBuildingToNewLine > 12)
+        {
+            putchar('\n');
+            entriesBuildingToNewLine = 0;
+        }
+    }
+}
+
+void NumWordB::COMMAND_FindFewestStepsOpeningWord(uint64_t startingIndex, uint64_t untilIndex)
+{
+    NumberWordStrategy strategy;
+    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kInputWord);
+    strategy.AddPrintBehavior(NumberWordStrategy::PrintBehavior::kPossibilitiesProgress);
+
+    strategy.SetSpecificStepStrategy(1, NumberWordStrategy::StepStrategy::kUseInputWord);
+
+    double fewestAverageSteps = 100.;
+    NumberWord fewestStepsWord = kInvalidNumberWord;
+    for (size_t i = startingIndex; (i <= untilIndex) && (i < NumberWord::sAllWords.size()); ++i)
+    {
+        const NumberWord& word = NumberWord::sAllWords.at(i);
+
+        strategy.SetInputWord(word);
+        strategy.TestAllPossibilities(NumberWord::sAnswerWords);
+        if (strategy.GetAverageStepsToSolve() < fewestAverageSteps)
+        {
+            fewestAverageSteps = strategy.GetAverageStepsToSolve();
+            fewestStepsWord = word;
+        }
+    }
+
+    printf("\nLowest average steps at: %.4f\n", fewestAverageSteps);
+    std::string textForWord;
+    fewestStepsWord.ConvertToString(textForWord);
+    printf(" %s", textForWord.c_str());
 }
 
 void NumWordB::COMMAND_PlayWordle()
