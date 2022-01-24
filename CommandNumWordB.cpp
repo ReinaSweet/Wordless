@@ -6,6 +6,7 @@ NumWordB::NumberWordStrategy::NumberWordStrategy()
     memcpy(mStepStrategies, kDefaultStrategies, sizeof(kDefaultStrategies));
     mRemainingPossibilitiesSource = &NumberWord::sAllWords;
     mSpecialWord1 = NumberWord::LookupNumberWord("stowp");
+    mSpecialWord2 = NumberWord::LookupNumberWord("trace");
 }
 
 size_t NumWordB::NumberWordStrategy::TestSpecificWord(const NumberWord& targetWord)

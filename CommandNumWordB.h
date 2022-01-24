@@ -18,7 +18,7 @@ public:
         kOptimalPatternMatch,
         kOptimalPatternMatchWithAlternatives,
         kSpecialWord1, // stowp
-        kSpecialWord2,
+        kSpecialWord2, // trace
         kUseInputWord,
         kTakeFirstEntry,
         kSuperSpecialLogicIGuess
@@ -37,7 +37,7 @@ public:
     };
     const StepStrategy kDefaultStrategies[kMaxSteps]
     {
-        StepStrategy::kSpecialWord1,
+        StepStrategy::kSpecialWord2,
         StepStrategy::kOptimalPatternMatch,
         StepStrategy::kOptimalPatternMatch,
         StepStrategy::kOptimalPatternMatch,
