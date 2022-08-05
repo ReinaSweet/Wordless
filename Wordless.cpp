@@ -49,6 +49,7 @@ int main()
     mainMenu.AddSubmenu("nwa", menuNumWordAExploration);
     mainMenu.AddSubmenu("nwb", menuNumWordBExploration);
     mainMenu.AddCommand("wordle", "Play Wordle Solver", NumWordB::COMMAND_PlayWordle);
+    mainMenu.AddCommand("quordle", "Play Quordle Solver", NumWordB::COMMAND_PlayQuordle);
 
     mainMenu.ResetMenu();
 

@@ -167,7 +167,7 @@ uint32_t NumWordB::NumberWordStrategy::TestAllPossibilitiesUntilPassXFails(const
     return fails;
 }
 
-bool NumWordB::NumberWordStrategy::ProceedToNextStepWithPatternAndPrintOptimalWord(uint16_t pattern)
+bool NumWordB::NumberWordStrategy::ProceedToNextStepWithPattern(uint16_t pattern)
 {
     if (mCurrentStep == 0)
     {
@@ -182,15 +182,23 @@ bool NumWordB::NumberWordStrategy::ProceedToNextStepWithPatternAndPrintOptimalWo
         }
 
         PairDownRemainingPossibilities(pattern, mCurrentInputWord);
+        if (mRemainingPossibilities.size() == 0)
+        {
+            return true;
+        }
     }
 
     const StepStrategy currentStrategy = (mCurrentStep < kMaxSteps) ? mStepStrategies[mCurrentStep] : kStrategyPostMax;
     ++mCurrentStep;
     mCurrentInputWord = GetOptimalWordFromStrategy(currentStrategy);
+    return true;
+}
+
+void NumWordB::NumberWordStrategy::PrintOptimalWordWithInstructions()
+{
     printf("\n\nINPUT THE FOLLOWING WORD:");
     PrintWord(mCurrentStep, mCurrentInputWord);
     printf("\n\nTHEN INPUT THE WORDLE RESULT.\n * 0 for a miss.\n * 1 for a partial (yellow).\n * 2 for a hit (green)\n\n");
-    return true;
 }
 
 void NumWordB::NumberWordStrategy::SetStrategy(StepStrategy stepStrategyList[kMaxSteps])
@@ -751,7 +759,8 @@ void NumWordB::COMMAND_FindFewestStepsOpeningWord(uint64_t startingIndex, uint64
 void NumWordB::COMMAND_PlayWordle()
 {
     NumberWordStrategy strategy;
-    strategy.ProceedToNextStepWithPatternAndPrintOptimalWord(0u);
+    strategy.ProceedToNextStepWithPattern(0u);
+    strategy.PrintOptimalWordWithInstructions();
 
     char c;
     std::string input;
@@ -762,6 +771,8 @@ void NumWordB::COMMAND_PlayWordle()
         if (c == '\b' && !input.empty())
         {
             input.pop_back();
+            putchar('\b');
+            putchar(' ');
             putchar('\b');
         }
         else if ((c == '0' || c == '1' || c == '2') && input.size() < kWordLength)
@@ -785,7 +796,108 @@ void NumWordB::COMMAND_PlayWordle()
             }
 
             input.clear();
-            loop = strategy.ProceedToNextStepWithPatternAndPrintOptimalWord(pattern);
+            loop = strategy.ProceedToNextStepWithPattern(pattern);
+            if (loop)
+            {
+                strategy.PrintOptimalWordWithInstructions();
+            }
         }
+    } while (loop);
+}
+
+void NumWordB::COMMAND_PlayQuordle()
+{
+    bool solvedStrategy[4] = { false, false, false, false };
+    size_t numSolved = 0;
+    NumberWordStrategy strategy[4];
+    for (size_t i = 0; i < 4; ++i)
+    {
+        strategy[i].ProceedToNextStepWithPattern(0u);
+    }
+    strategy[0].PrintOptimalWordWithInstructions();
+
+    char c;
+    std::string input;
+    bool loop = true;
+
+    do
+    {
+        size_t largestRemaining = 0;
+        size_t idealIndex = 0;
+        bool foundSingleRemainining = false;
+        for (size_t i = 0; i < 4; ++i)
+        {
+            if (solvedStrategy[i] == true)
+            {
+                continue;
+            }
+
+            printf("\nPut in input %zu\n", i + 1);
+            do
+            {
+                c = _getch();
+                if (c == '\b' && !input.empty())
+                {
+                    input.pop_back();
+                    putchar('\b');
+                    putchar(' ');
+                    putchar('\b');
+                }
+                else if ((c == '0' || c == '1' || c == '2') && input.size() < kWordLength)
+                {
+                    input.push_back(c);
+                    putchar(c);
+                }
+                else if ((c == '\n' || c == '\r') && input.size() == kWordLength)
+                {
+                    uint16_t pattern = kEarmarkMatchPattern;
+                    for (size_t i = 0; i < kWordLength; ++i)
+                    {
+                        if (input[i] == '1')
+                        {
+                            pattern += static_cast<uint16_t>(SingleMatch::kPartial) << (i * kBitsPerMatch);
+                        }
+                        else if (input[i] == '2')
+                        {
+                            pattern += static_cast<uint16_t>(SingleMatch::kHit) << (i * kBitsPerMatch);
+                        }
+                    }
+
+                    input.clear();
+                    const bool allMatch = !strategy[i].ProceedToNextStepWithPattern(pattern);
+                    if (allMatch)
+                    {
+                        solvedStrategy[i] = true;
+                        ++numSolved;
+                        if (numSolved == 4)
+                        {
+                            loop = false;
+                        }
+                    }
+                    else if (strategy[i].GetNumRemainingPossibilities() == 1)
+                    {
+                        foundSingleRemainining = true;
+                        idealIndex = i;
+                    }
+                    else if ((strategy[i].GetNumRemainingPossibilities() > largestRemaining) && !foundSingleRemainining)
+                    {
+                        largestRemaining = strategy[i].GetNumRemainingPossibilities();
+                        idealIndex = i;
+                    }
+                    break;
+                }
+            } while (true);
+        }
+
+        if (numSolved < 4)
+        {
+            NumberWord idealNextInputWord = strategy[idealIndex].GetCurrentInputWord();
+            for (size_t i = 0; i < 4; ++i)
+            {
+                strategy[idealIndex].SetInputWord(idealNextInputWord);
+            }
+            strategy[idealIndex].PrintOptimalWordWithInstructions();
+        }
+
     } while (loop);
 }

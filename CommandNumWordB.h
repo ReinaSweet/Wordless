@@ -52,7 +52,8 @@ public:
     size_t TestSpecificWord(const NumberWord& targetWord);
     uint32_t TestAllPossibilities(const std::vector<NumberWord>& allPossibilities);
     uint32_t TestAllPossibilitiesUntilPassXFails(const std::vector<NumberWord>& allPossibilities, uint32_t xFails);
-    bool ProceedToNextStepWithPatternAndPrintOptimalWord(uint16_t pattern);
+    bool ProceedToNextStepWithPattern(uint16_t pattern);
+    void PrintOptimalWordWithInstructions();
 
     void SetStrategy(StepStrategy stepStrategyList[kMaxSteps]);
     void SetSpecificStepStrategy(size_t step, StepStrategy stepStrategy);
@@ -63,6 +64,8 @@ public:
     void SetStartingStep(size_t step);
 
     double GetAverageStepsToSolve() const { return mAverageStepsToSolve; }
+    size_t GetNumRemainingPossibilities() const { return mRemainingPossibilities.size(); }
+    NumberWord GetCurrentInputWord() const { return mCurrentInputWord; }
 
 private:
     void PairDownSpecificPossibilities(uint16_t sourceMatch, const NumberWord& entryWord, std::vector<NumberWord>& possibilities) const;
@@ -108,4 +111,5 @@ void COMMAND_SpecificStartSpecificWord(const char* const start, const char* cons
 void COMMAND_DisplayFarRemovedLetterCombinations();
 void COMMAND_FindFewestStepsOpeningWord(uint64_t startingIndex, uint64_t untilIndex);
 void COMMAND_PlayWordle();
+void COMMAND_PlayQuordle();
 } // namespace NumWordB
